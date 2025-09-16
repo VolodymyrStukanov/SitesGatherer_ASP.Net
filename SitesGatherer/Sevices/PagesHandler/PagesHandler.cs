@@ -20,6 +20,7 @@ namespace SitesGatherer.Sevices.PagesHandler
         private readonly IToLoadStorage toLoadStorage;
         private readonly IHtmlParser parser;
         private readonly ISettingsService settings;
+        private int pageCounter = 0;
 
         public PagesHandler(
             ILoader loader,
@@ -45,21 +46,30 @@ namespace SitesGatherer.Sevices.PagesHandler
             await this.StartProcessing();
         }
 
+        private short toSaveNumber = 100;
         private async Task StartProcessing()
         {
-            int counter = 0;
             while (this.toLoadStorage.GetToLoadCount() > 0)
             {
                 if (this.toLoadStorage.TryGetNext(out ToLoad toProcess))
                 {
                     await this.ProcessPage(toProcess!);
-                    Console.WriteLine($"{counter++} ---- {toProcess!.Link}");
+                    Console.WriteLine($"{this.pageCounter++} ---- {toProcess!.Link}");
+                    if (this.pageCounter % toSaveNumber == 0)
+                    {
+                        //ЗБЕРІГАННЯ ДАНИХ ЛОАЛЬНО У ФАЙЛ
+
+                        //ДОПИСАТИ ОБРОБКУ ВИЙНЯТКІВ, ЩОБ НЕ ВТРАТИТИ ДАНІ ЯКЩО ПРОГРАМА ЛАМАЄТЬСЯ//////////////////////////////////
+
+
+                        // this.dataSavier.Save();
+                    }
                     Thread.Sleep(200);
                 }
             }
         }
 
-        private async Task ProcessPage(ToLoad toLoad)
+            private async Task ProcessPage(ToLoad toLoad)
         {
             var page = await this.loader.LoadPage(toLoad.Link);
             if (page.Length == 0) return;

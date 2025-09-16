@@ -26,7 +26,7 @@ namespace SitesGatherer.Sevices.LeadsService
             {
                 if (page.CanBeLead(catalogContactsCountLimit, settings.ProhibitedUrls))
                 {
-                    var newLead = new Lead(page.Content!.PhoneNumbers, page.Content.Emails, page.FullRoute!);
+                    var newLead = new Lead(page.Payload!.PhoneNumbers, page.Payload.Emails, page.FullRoute!);
                     if (result.Count == 0)
                     {
                         result.Add(newLead);

@@ -1,5 +1,5 @@
-
 using SitesGatherer.Sevices.HTMLParser.Models;
+using SitesGatherer.Sevices.Serialization.ModelsDTO;
 using SitesGatherer.Sevices.SitesStorageService.Models;
 using SitesGatherer.Sevices.ToLoadStorageService.Models;
 
@@ -25,6 +25,8 @@ namespace SitesGatherer.Sevices.SitesStorageService
             }
         }
 
+        //ПОКИ НЕ ВИКОРИСТОВУЄТЬСЯ
+        //ЯКЩО ВИДАЛЯТИ ТО ТРЕБА НЕ ЗАБУТИ ВИДАЛИТИ ПЕРЕВІРКУ ДОСЯГНЕННЯ ЛІМІТУ З КЛАСУ Site
         public bool LimitReached(string domain)
         {
             var site = this.sites.Find(x => x.Domain == domain);
@@ -67,6 +69,19 @@ namespace SitesGatherer.Sevices.SitesStorageService
                     site.ResetIterator();
                 }
             }
+        }
+
+        public SitesStorageDto ToDto()
+        {
+            return new SitesStorageDto
+            {
+                Sites = sites.Select(s => s.ToDto()).ToList()
+            };
+        }
+
+        public void Restore(IEnumerable<Site> data)
+        {
+            this.sites.AddRange(data);
         }
     }
 }

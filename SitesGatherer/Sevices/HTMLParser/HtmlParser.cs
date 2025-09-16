@@ -151,6 +151,14 @@ namespace SitesGatherer.Sevices.HTMLParser
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
             
+            //removing all scripts and styles
+            var garbage = doc.DocumentNode.SelectNodes("//script|//style");
+            if (garbage != null)
+            {
+                foreach (var node in garbage)
+                    node.Remove();
+            }
+
             // Replace all HTML tags with their text content followed by a space
             HtmlNodeCollection? allElements = doc.DocumentNode.SelectNodes("//*");
             if (allElements != null)

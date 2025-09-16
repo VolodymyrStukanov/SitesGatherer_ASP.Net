@@ -1,25 +1,31 @@
-
-
 using SitesGatherer.Sevices.HTMLParser.Models;
+using SitesGatherer.Sevices.Serialization.Interfaces;
+using SitesGatherer.Sevices.Serialization.ModelsDTO;
+using SitesGatherer.Sevices.SitesStorageService.Factories;
 
 namespace SitesGatherer.Sevices.SitesStorageService.Models
 {
-    public class Site
+    public class Site : ISerializableData<SiteDto>
     {
         public string Domain { get; }
         private readonly Page homePage;
         private readonly int pageLimit;
-        private readonly int pagesCount = 0;
-        private readonly List<string> parentDomains;
+        private int pagesCount = 0;
+        private readonly List<string> parentDomains = [];
         private bool allPagesIterated = false;
-
+        
         private readonly Lock lockObject = new();
         public Site(string domain, string? parent = null, int pageLimit = 100)
         {
             this.Domain = domain;
             this.homePage = new Page(domain);
             this.pageLimit = pageLimit;
-            this.parentDomains = [domain];
+            this.parentDomains = parent == null ? [] : [parent];
+        }
+        public Site(string domain, Page homePage)
+        {
+            this.Domain = domain;
+            this.homePage = homePage;
         }
 
         public void AddPage(ParsedPage parsedPage, string[] pathParts, string? parentDomain = null)
@@ -36,7 +42,7 @@ namespace SitesGatherer.Sevices.SitesStorageService.Models
                         currentPage.AddChildPage(newPage);
                         currentPage = newPage;
                     }
-                    currentPage.SetContent(parsedPage.Text, parsedPage.Emails, parsedPage.PhoneNumbers);
+                    currentPage.SetPayload(parsedPage.Text, parsedPage.Emails, parsedPage.PhoneNumbers);
                 }
                 else
                 {
@@ -50,14 +56,15 @@ namespace SitesGatherer.Sevices.SitesStorageService.Models
                     }
                     if (i != pathParts.Length)
                     {
-                        var newPage = new Page(pathParts[i], parsedPage.Text, parsedPage.PhoneNumbers, parsedPage.Emails);
+                        var newPage = PageFactory.Default(pathParts[i], parsedPage.Text, parsedPage.PhoneNumbers, parsedPage.Emails);
                         currentPage.AddChildPage(newPage);
                     }
                     else
                     {
-                        currentPage.SetContent(parsedPage.Text, parsedPage.Emails, parsedPage.PhoneNumbers);
+                        currentPage.SetPayload(parsedPage.Text, parsedPage.Emails, parsedPage.PhoneNumbers);
                     }
                 }
+                this.pagesCount++;
             }
         }
 
@@ -77,7 +84,7 @@ namespace SitesGatherer.Sevices.SitesStorageService.Models
         {
             if (allPagesIterated) return null;
 
-            var page = this.homePage.GetNextPage();
+            var page = this.homePage.GetNextChildPage();
             if (page == this.homePage)
                 this.allPagesIterated = true;
             return page;
@@ -86,6 +93,18 @@ namespace SitesGatherer.Sevices.SitesStorageService.Models
         {
             this.allPagesIterated = false;
             this.homePage.ResetIterator();
+        }
+
+        public SiteDto ToDto()
+        {           
+            return new SiteDto
+            {
+                Domain = Domain,
+                HomePage = homePage.ToDto(),
+                PagesCount = pagesCount,
+                ParentDomains = parentDomains.ToList(),
+                AllPagesIterated = allPagesIterated
+            };
         }
     }
 }

@@ -1,10 +1,12 @@
 using SitesGatherer.Sevices.HTMLParser.Models;
+using SitesGatherer.Sevices.Serialization.Interfaces;
+using SitesGatherer.Sevices.Serialization.ModelsDTO;
 using SitesGatherer.Sevices.SitesStorageService.Models;
 using SitesGatherer.Sevices.ToLoadStorageService.Models;
 
 namespace SitesGatherer.Sevices.SitesStorageService
 {
-    public interface ISitesStorage
+    public interface ISitesStorage : ISerializableData<SitesStorageDto>, IDeserializedStorage<IEnumerable<Site>>
     {
         public void StorePage(ParsedPage parsedPage, ToLoad toLoad);
 

@@ -1,4 +1,5 @@
-using Microsoft.AspNetCore.Builder;
+
+using SitesGatherer.Sevices.DataStorageService;
 using SitesGatherer.Sevices.HTMLParser;
 using SitesGatherer.Sevices.LeadsService;
 using SitesGatherer.Sevices.LoadService;
@@ -51,6 +52,7 @@ builder.Services.AddSingleton<ISettingsService, SettingsService>();
 builder.Services.AddSingleton<ISitesStorage, SitesStorage>();
 builder.Services.AddSingleton<IPagesHandler, PagesHandler>();
 builder.Services.AddSingleton<IToLoadStorage, ToLoadStorage>();
+builder.Services.AddSingleton<DataSavier>();
 
 builder.Services.AddTransient<IHtmlParser, HtmlParser>();
 builder.Services.AddTransient<ILeadsGenerator, LeadsGenerator>();
