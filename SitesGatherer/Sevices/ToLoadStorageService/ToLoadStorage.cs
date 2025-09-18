@@ -1,6 +1,6 @@
-
 using SitesGatherer.Extensions;
-using SitesGatherer.Sevices.SitesStorageService;
+using SitesGatherer.Sevices.Serialization.ModelsDTO;
+using SitesGatherer.Sevices.SitesStorageService.Interfaces;
 using SitesGatherer.Sevices.ToLoadStorageService.Models;
 
 namespace SitesGatherer.Sevices.ToLoadStorageService
@@ -9,10 +9,9 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
     {
         public readonly Queue<ToLoad> toLoads = [];
         private readonly Dictionary<int, HashSet<string>> hashLookup = [];
-
-        private readonly ISitesStorage parsedStorage;
-        private readonly ISitesStorage skippedStorage;
-        public ToLoadStorage(ISitesStorage parsedStorage, ISitesStorage skippedStorage)
+        private readonly IParsedStorage parsedStorage;
+        private readonly ISkippedStorage skippedStorage;
+        public ToLoadStorage(IParsedStorage parsedStorage, ISkippedStorage skippedStorage)
         {
             this.parsedStorage = parsedStorage;
             this.skippedStorage = skippedStorage;
@@ -57,7 +56,7 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
             return true;
         }
 
-        private void AddToReferenceList(IEnumerable<ToLoad> newItems)
+        private void AddToLinkList(IEnumerable<ToLoad> newItems)
         {
             foreach (var item in newItems)
             {
@@ -74,7 +73,7 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
             }
         }
 
-        public IEnumerable<ToLoad> AddToLoads(List<string> urls, string? parentDomain = null, int? parentshipDepth = null)
+        public void AddToLoads(List<string> urls, string? parentDomain = null, int? parentshipDepth = null)
         {
             var newToLoad = urls.GetToLoads(parentDomain, parentshipDepth);
 
@@ -100,10 +99,24 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
             });
 
             //adding new links
-            AddToReferenceList(newToLoad);
-            return newToLoad;
+            AddToLinkList(newToLoad);
         }
 
         public int GetToLoadCount() => this.toLoads.Count;
+
+        public ToLoadStorageDto ToDto()
+        {
+            return new ToLoadStorageDto
+            {
+                ToLoadDtos = this.toLoads.Select(x => x.ToDto()),
+            };
+        }
+
+        public void Restore(ToLoadStorageDto data)
+        {
+            foreach (var toLoad in data.ToLoadDtos) {
+                AddToLoads([toLoad.Link], toLoad.ParentDomain, toLoad.ParentshipDepth);
+            }
+        }
     }
 }

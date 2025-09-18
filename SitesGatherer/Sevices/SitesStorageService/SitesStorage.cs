@@ -1,11 +1,12 @@
 using SitesGatherer.Sevices.HTMLParser.Models;
 using SitesGatherer.Sevices.Serialization.ModelsDTO;
+using SitesGatherer.Sevices.SitesStorageService.Interfaces;
 using SitesGatherer.Sevices.SitesStorageService.Models;
 using SitesGatherer.Sevices.ToLoadStorageService.Models;
 
 namespace SitesGatherer.Sevices.SitesStorageService
 {
-    public class SitesStorage : ISitesStorage
+    public class SitesStorage : ISkippedStorage, IParsedStorage
     {
         private int siteIterator = 0;
         private readonly List<Site> sites = [];

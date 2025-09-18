@@ -1,12 +1,12 @@
 using SitesGatherer.Sevices.HTMLParser;
 using SitesGatherer.Sevices.LoadService;
 using SitesGatherer.Sevices.PagesHandler.Models;
-using SitesGatherer.Sevices.SitesStorageService;
 using SitesGatherer.Sevices.ToLoadStorageService.Models;
 using SitesGatherer.Sevices.ToLoadStorageService;
 using SitesGatherer.Sevices.HTMLParser.Models;
 using Microsoft.Extensions.Options;
 using SitesGatherer.Sevices.Settings;
+using SitesGatherer.Sevices.SitesStorageService.Interfaces;
 
 namespace SitesGatherer.Sevices.PagesHandler
 {
@@ -15,8 +15,8 @@ namespace SitesGatherer.Sevices.PagesHandler
         private readonly WorkerSettings workerSettings;
         
         private readonly ILoader loader;
-        private readonly ISitesStorage parsedStorage;
-        private readonly ISitesStorage skippedStorage;
+        private readonly IParsedStorage parsedStorage;
+        private readonly ISkippedStorage skippedStorage;
         private readonly IToLoadStorage toLoadStorage;
         private readonly IHtmlParser parser;
         private readonly ISettingsService settings;
@@ -24,9 +24,8 @@ namespace SitesGatherer.Sevices.PagesHandler
 
         public PagesHandler(
             ILoader loader,
-            ISitesStorage parsedStorage,
-            ISitesStorage skippedStorage,
-            IHtmlParser parser,
+            IParsedStorage parsedStorage,
+            ISkippedStorage skippedStorage,
             IOptions<WorkerSettings> workerSettings,
             ISettingsService settings,
             IToLoadStorage toLoadStorage)
@@ -34,7 +33,7 @@ namespace SitesGatherer.Sevices.PagesHandler
             this.loader = loader;
             this.parsedStorage = parsedStorage;
             this.skippedStorage = skippedStorage;
-            this.parser = parser;
+            this.parser = new HtmlParser();
             this.workerSettings = workerSettings.Value;
             this.toLoadStorage = toLoadStorage;
             this.settings = settings;
@@ -69,7 +68,7 @@ namespace SitesGatherer.Sevices.PagesHandler
             }
         }
 
-            private async Task ProcessPage(ToLoad toLoad)
+        private async Task ProcessPage(ToLoad toLoad)
         {
             var page = await this.loader.LoadPage(toLoad.Link);
             if (page.Length == 0) return;

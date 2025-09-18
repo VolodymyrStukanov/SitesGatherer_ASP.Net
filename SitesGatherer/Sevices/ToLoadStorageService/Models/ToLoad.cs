@@ -1,7 +1,9 @@
+using SitesGatherer.Sevices.Serialization.Interfaces;
+using SitesGatherer.Sevices.Serialization.ModelsDTO;
 
 namespace SitesGatherer.Sevices.ToLoadStorageService.Models
 {
-    public class ToLoad
+    public class ToLoad : ISerializableData<ToLoadDto>
     {
         public string Link { get; }
         public string[] PathParts { get; }
@@ -50,6 +52,16 @@ namespace SitesGatherer.Sevices.ToLoadStorageService.Models
             {
                 this.ParentshipDepth = parentshipDepth - 1 < 1 ? 0 : parentshipDepth - 1;
             }
+        }
+
+        public ToLoadDto ToDto()
+        {
+            return new ToLoadDto()
+            {
+                Link = this.Link,
+                ParentDomain = this.ParentDomain,
+                ParentshipDepth = this.ParentDomain == this.Domain ? this.ParentshipDepth : this.ParentshipDepth + 1
+            };
         }
     }
 }

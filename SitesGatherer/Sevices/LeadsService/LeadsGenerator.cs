@@ -1,15 +1,15 @@
 using SitesGatherer.Sevices.LeadsService.models;
 using SitesGatherer.Sevices.Settings;
-using SitesGatherer.Sevices.SitesStorageService;
+using SitesGatherer.Sevices.SitesStorageService.Interfaces;
 using SitesGatherer.Sevices.SitesStorageService.Models;
 
 namespace SitesGatherer.Sevices.LeadsService
 {
     public class LeadsGenerator : ILeadsGenerator
     {
-        private readonly ISitesStorage parsedStorage;
+        private readonly IParsedStorage parsedStorage;
         private readonly ISettingsService settings;
-        public LeadsGenerator(ISitesStorage parsedStorage, ISettingsService settings)
+        public LeadsGenerator(IParsedStorage parsedStorage, ISettingsService settings)
         {
             this.parsedStorage = parsedStorage;
             this.settings = settings;

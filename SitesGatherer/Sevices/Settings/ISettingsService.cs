@@ -10,6 +10,8 @@ namespace SitesGatherer.Sevices.Settings
         public List<string> StartUrls { get; }
 
         public void SetConfigs(ConfigModel configs);
-
+        public string? GetToLoadStorageJSON();
+        public string? GetParsedStorageJSON();
+        public string? GetSkippedStorageJSON();
     }
 }

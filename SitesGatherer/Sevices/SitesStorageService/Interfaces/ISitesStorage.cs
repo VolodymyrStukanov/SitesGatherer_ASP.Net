@@ -4,7 +4,7 @@ using SitesGatherer.Sevices.Serialization.ModelsDTO;
 using SitesGatherer.Sevices.SitesStorageService.Models;
 using SitesGatherer.Sevices.ToLoadStorageService.Models;
 
-namespace SitesGatherer.Sevices.SitesStorageService
+namespace SitesGatherer.Sevices.SitesStorageService.Interfaces
 {
     public interface ISitesStorage : ISerializableData<SitesStorageDto>, IDeserializedStorage<IEnumerable<Site>>
     {

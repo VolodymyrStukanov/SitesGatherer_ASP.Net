@@ -58,7 +58,7 @@ namespace SitesGatherer.Controllers.Setup
         [HttpPost]
         public async Task<IActionResult> SaveManually()
         {
-            this.dataSavier.SaveProcessed();
+            this.dataSavier.Save();
             return Ok("Request received.");
         }
 
