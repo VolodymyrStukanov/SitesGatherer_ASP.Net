@@ -10,6 +10,8 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
         public void AddToLoads(List<string> urls, string? parentDomain = null, int? parentshipDepth = null);
         public ToLoad? GetNext();
         public bool TryGetNext(out ToLoad? toLoad);
+        public bool TryGetNextByDomain(out ToLoad toLoad, string domain);
         public int GetToLoadCount();
+        public List<string> GetUniqueDomains();
     }
 }

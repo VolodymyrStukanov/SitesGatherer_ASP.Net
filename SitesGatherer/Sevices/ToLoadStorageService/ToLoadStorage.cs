@@ -7,7 +7,9 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
 {
     public class ToLoadStorage : IToLoadStorage
     {
-        public readonly Queue<ToLoad> toLoads = [];
+        private readonly Lock lockObject = new();
+        
+        private readonly List<ToLoad> toLoads = [];
         private readonly Dictionary<int, HashSet<string>> hashLookup = [];
         private readonly IParsedStorage parsedStorage;
         private readonly ISkippedStorage skippedStorage;
@@ -19,41 +21,77 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
 
         public ToLoad? GetNext()
         {
-            if (toLoads.Count == 0)
-                return null;
-
-            var next = toLoads.Dequeue();
-            int hash = next.LinkHash;
-
-            if (hashLookup.TryGetValue(hash, out var set))
+            lock (lockObject)
             {
-                set.Remove(next.Link);
+                if (toLoads.Count == 0)
+                    return null;
 
-                if (set.Count == 0)
-                    hashLookup.Remove(hash);
+                var next = toLoads.FirstOrDefault();
+                if (next == null) return null;
+
+                toLoads.Remove(next);
+                int hash = next.LinkHash;
+
+                if (hashLookup.TryGetValue(hash, out var set))
+                {
+                    set.Remove(next.Link);
+
+                    if (set.Count == 0)
+                        hashLookup.Remove(hash);
+                }
+                return next;                
             }
-            return next;
         }
 
         public bool TryGetNext(out ToLoad toLoad)
         {
-            if (toLoads.Count == 0)
+            lock (lockObject)
             {
-                toLoad = new ToLoad();
-                return false;
+                var found = toLoads.FirstOrDefault();
+                if (found == null)
+                {
+                    toLoad = new ToLoad();
+                    return false;                    
+                }
+                toLoad = found;
+                toLoads.Remove(toLoad);
+
+                int hash = toLoad.LinkHash;
+
+                if (hashLookup.TryGetValue(hash, out var set))
+                {
+                    set.Remove(toLoad.Link);
+
+                    if (set.Count == 0)
+                        hashLookup.Remove(hash);
+                }
+                return true;
             }
+        }
 
-            toLoad = toLoads.Dequeue();
-            int hash = toLoad.LinkHash;
-
-            if (hashLookup.TryGetValue(hash, out var set))
+        public bool TryGetNextByDomain(out ToLoad toLoad, string domain)
+        {
+            lock (lockObject)
             {
-                set.Remove(toLoad.Link);
+                var found = toLoads.Find(x => x.Domain == domain);
+                if (found == null)
+                {
+                    toLoad = new ToLoad();
+                    return false;
+                }
+                toLoad = found;
+                toLoads.Remove(toLoad);
 
-                if (set.Count == 0)
-                    hashLookup.Remove(hash);
+                int hash = toLoad.LinkHash;
+                if (hashLookup.TryGetValue(hash, out var set))
+                {
+                    set.Remove(toLoad.Link);
+
+                    if (set.Count == 0)
+                        hashLookup.Remove(hash);
+                }
+                return true;
             }
-            return true;
         }
 
         private void AddToLinkList(IEnumerable<ToLoad> newItems)
@@ -69,53 +107,72 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
                 }
 
                 set.Add(item.Link);
-                toLoads.Enqueue(item);
+                toLoads.Add(item);
             }
         }
 
         public void AddToLoads(List<string> urls, string? parentDomain = null, int? parentshipDepth = null)
         {
-            var newToLoad = urls.GetToLoads(parentDomain, parentshipDepth);
 
-            if (parentshipDepth == 0 && parentDomain != null)
+            lock (lockObject)
             {
-                newToLoad = newToLoad.Where(x => x.Domain == parentDomain);
+                var newToLoad = urls.GetToLoads(parentDomain, parentshipDepth);
+
+                if (parentshipDepth == 0 && parentDomain != null)
+                {
+                    newToLoad = newToLoad.Where(x => x.Domain == parentDomain);
+                }
+
+                //filter out duplicates
+                newToLoad = newToLoad.DistinctBy(x => x.LinkHash);
+
+                //filter out already processed links
+                newToLoad = newToLoad
+                .Where(x => !this.parsedStorage.Contains(x.Domain, x.PathParts)
+                    && !this.skippedStorage.Contains(x.Domain, x.PathParts));
+
+                //filter out already added
+                newToLoad = newToLoad
+                .Where(item =>
+                {
+                    int hash = item.LinkHash;
+                    return !hashLookup.TryGetValue(hash, out var set) || !set.Contains(item.Link);
+                });
+
+                //adding new links
+                AddToLinkList(newToLoad);
             }
-            
-            //filter out duplicates
-            newToLoad = newToLoad.DistinctBy(x => x.LinkHash);
-
-            //filter out already processed links
-            newToLoad = newToLoad
-            .Where(x => !this.parsedStorage.Contains(x.Domain, x.PathParts)
-                && !this.skippedStorage.Contains(x.Domain, x.PathParts));
-
-            //filter out already added
-            newToLoad = newToLoad
-            .Where(item =>
-            {
-                int hash = item.LinkHash;
-                return !hashLookup.TryGetValue(hash, out var set) || !set.Contains(item.Link);
-            });
-
-            //adding new links
-            AddToLinkList(newToLoad);
         }
 
         public int GetToLoadCount() => this.toLoads.Count;
 
         public ToLoadStorageDto ToDto()
         {
-            return new ToLoadStorageDto
+            lock (lockObject)
             {
-                ToLoadDtos = this.toLoads.Select(x => x.ToDto()),
-            };
+                return new ToLoadStorageDto
+                {
+                    ToLoadDtos = this.toLoads.Select(x => x.ToDto()),
+                };
+            }
         }
 
         public void Restore(ToLoadStorageDto data)
         {
             foreach (var toLoad in data.ToLoadDtos) {
                 AddToLoads([toLoad.Link], toLoad.ParentDomain, toLoad.ParentshipDepth);
+            }
+        }
+
+        public List<string> GetUniqueDomains()
+        {
+            lock (lockObject)
+            {
+                return this.toLoads.Aggregate(new List<string>(), (total, next) =>
+                {
+                    if (!total.Contains(next.Domain)) return [.. total, next.Domain];
+                    return total;
+                });
             }
         }
     }

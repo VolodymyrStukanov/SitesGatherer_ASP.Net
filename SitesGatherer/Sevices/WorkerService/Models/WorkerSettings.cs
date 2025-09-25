@@ -1,4 +1,4 @@
-namespace SitesGatherer.Sevices.PagesHandler.Models
+namespace SitesGatherer.Sevices.WorkerService.Models
 {
     public class WorkerSettings
     {

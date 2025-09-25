@@ -39,7 +39,6 @@ namespace SitesGatherer.Sevices.LoadService
 
                 string html = encoding.GetString(bytes);
 
-                // string html = await client.GetStringAsync(url);
                 return html;
             }
             catch (Exception ex)

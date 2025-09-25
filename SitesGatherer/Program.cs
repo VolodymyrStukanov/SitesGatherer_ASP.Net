@@ -3,12 +3,12 @@ using SitesGatherer.Sevices.DataStorageService;
 using SitesGatherer.Sevices.LeadsService;
 using SitesGatherer.Sevices.LoadService;
 using SitesGatherer.Sevices.PagesHandler;
-using SitesGatherer.Sevices.PagesHandler.Models;
 using SitesGatherer.Sevices.Serialization.Extensions;
 using SitesGatherer.Sevices.Settings;
 using SitesGatherer.Sevices.SitesStorageService;
 using SitesGatherer.Sevices.SitesStorageService.Interfaces;
 using SitesGatherer.Sevices.ToLoadStorageService;
+using SitesGatherer.Sevices.WorkerService.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,7 +65,6 @@ builder.Services.AddSingleton<IParsedStorage, SitesStorage>(options =>
     var json = settingsService.GetParsedStorageJSON();
     return json == null ? new SitesStorage() : json.DataStorageFromJson();
 });
-builder.Services.AddSingleton<IPagesHandler, PagesHandler>();
 builder.Services.AddSingleton<IToLoadStorage, ToLoadStorage>(options =>
 {
     var skippedStorage = options.GetService<ISkippedStorage>()!;
@@ -75,6 +74,7 @@ builder.Services.AddSingleton<IToLoadStorage, ToLoadStorage>(options =>
     var json = settingsService.GetToLoadStorageJSON();
     return json == null ? new ToLoadStorage(parsedStorage, skippedStorage) : json.ToLoadStorageFromJson(parsedStorage, skippedStorage);
 });
+builder.Services.AddSingleton<IPagesHandler, PagesHandler>();
 
 builder.Services.AddTransient<ILeadsGenerator, LeadsGenerator>();
 builder.Services.AddTransient<ILoader>(sp =>

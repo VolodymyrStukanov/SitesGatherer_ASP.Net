@@ -38,6 +38,18 @@ namespace SitesGatherer.Controllers.Setup
             return Ok("Request received.");
         }
 
+        [Route("StartAsync")]
+        [HttpGet]
+        public async Task<IActionResult> StartAsync()
+        {
+            Task.Run(() =>
+            {
+                pagesHandler.Start(RunnigMode.MultyThread);
+            });
+
+            return Ok("Request received.");
+        }
+
         [Route("GetLeads")]
         [HttpGet]
         public async Task<IActionResult> GetLeads()
@@ -61,8 +73,6 @@ namespace SitesGatherer.Controllers.Setup
             this.dataSavier.Save();
             return Ok("Request received.");
         }
-
-
     }
 
 }

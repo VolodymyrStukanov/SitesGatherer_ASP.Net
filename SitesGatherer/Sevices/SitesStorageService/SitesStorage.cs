@@ -74,10 +74,13 @@ namespace SitesGatherer.Sevices.SitesStorageService
 
         public SitesStorageDto ToDto()
         {
-            return new SitesStorageDto
+            lock (lockObject)
             {
-                Sites = sites.Select(s => s.ToDto()).ToList()
-            };
+                return new SitesStorageDto
+                {
+                    Sites = sites.Select(s => s.ToDto()).ToList()
+                };
+            }
         }
 
         public void Restore(IEnumerable<Site> data)
