@@ -13,6 +13,11 @@ namespace SitesGatherer.Sevices.SitesStorageService.Factories
             return new Page(route, new Payload(content, phoneNumbers, emails));
         }
 
+        public static Page Empty(string route)
+        {
+            return new Page(route);
+        }
+
         public static Page AsChild(Page original, string? parentRoute = null)
         {
             var payload = original.Payload == null ? null : new Payload(original.Payload);

@@ -6,7 +6,6 @@ using SitesGatherer.Sevices.HTMLParser.Models;
 using System.Text.RegularExpressions;
 using SitesGatherer.Extensions;
 
-
 namespace SitesGatherer.Sevices.HTMLParser
 {
     public class HtmlParser : IHtmlParser
@@ -39,7 +38,7 @@ namespace SitesGatherer.Sevices.HTMLParser
             // + " sale@liftec-group.com.ua          247-25-47@ukr.net           v.i.studia@gmail.com asdasdaasd pillars@i.ua 5381241@stud.kai.edu.ua";
             List<string> emails = ExtractMatches(text, emailPatterns);
             List<string> phoneNumbers = ExtractPhoneNumbers(text);
-            return new ParsedPage(links, emails, phoneNumbers, text, new Language(lang));
+            return new ParsedPage(links, emails, phoneNumbers, text, lang);
         }
 
         private List<string> ExtractPhoneNumbers(string input)
@@ -113,17 +112,6 @@ namespace SitesGatherer.Sevices.HTMLParser
             var config = Configuration.Default;
             var context = BrowsingContext.New(config);
             var document = await context.OpenAsync(req => req.Content(html));
-            
-            // // 1. <a href="">
-            // var attributesWithLinks = document.QuerySelectorAll("a[href]").ToList();
-            // // 2. <img src="">, <script src="">, <iframe src="">
-            // attributesWithLinks.AddRange(document.QuerySelectorAll("[src]").ToList());
-            // // 3. <link href="">
-            // attributesWithLinks.AddRange(document.QuerySelectorAll("link[href]").ToList());
-            // // 4. <form action="">
-            // attributesWithLinks.AddRange(document.QuerySelectorAll("form[action]").ToList());
-            // // 5. Inline styles: url(...)
-            // attributesWithLinks.AddRange(document.QuerySelectorAll("[style]").ToList());
 
             var attributesWithLinks = document.QuerySelectorAll("a");
             var links = new List<string>();

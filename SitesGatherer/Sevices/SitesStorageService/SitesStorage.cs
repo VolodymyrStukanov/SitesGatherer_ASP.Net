@@ -6,13 +6,13 @@ using SitesGatherer.Sevices.ToLoadStorageService.Models;
 
 namespace SitesGatherer.Sevices.SitesStorageService
 {
-    public class SitesStorage : ISkippedStorage, IParsedStorage
+    public class SitesStorage : ISitesStorage
     {
         private int siteIterator = 0;
         private readonly List<Site> sites = [];
         private readonly Lock lockObject = new();
 
-        public void StorePage(ParsedPage parsedPage, ToLoad toLoad)
+        public void StorePage(ParsedPage? parsedPage, ToLoad toLoad)
         {
             lock (lockObject)
             {
@@ -86,6 +86,15 @@ namespace SitesGatherer.Sevices.SitesStorageService
         public void Restore(IEnumerable<Site> data)
         {
             this.sites.AddRange(data);
+        }
+
+        public void RemoveSiteByDomain(string domain)
+        {
+            lock (lockObject)
+            {
+                var site = this.sites.Find(x => x.Domain == domain);
+                if(site != null) this.sites.Remove(site);
+            }
         }
     }
 }

@@ -28,7 +28,7 @@ namespace SitesGatherer.Sevices.SitesStorageService.Models
             this.homePage = homePage;
         }
 
-        public void AddPage(ParsedPage parsedPage, string[] pathParts, string? parentDomain = null)
+        public void AddPage(ParsedPage? parsedPage, string[] pathParts, string? parentDomain = null)
         {
             lock (lockObject)
             {
@@ -42,7 +42,7 @@ namespace SitesGatherer.Sevices.SitesStorageService.Models
                         currentPage.AddChildPage(newPage);
                         currentPage = newPage;
                     }
-                    currentPage.SetPayload(parsedPage.Text, parsedPage.Emails, parsedPage.PhoneNumbers);
+                    if(parsedPage != null) currentPage.SetPayload(parsedPage.Text, parsedPage.Emails, parsedPage.PhoneNumbers);
                 }
                 else
                 {
@@ -56,13 +56,12 @@ namespace SitesGatherer.Sevices.SitesStorageService.Models
                     }
                     if (i != pathParts.Length)
                     {
-                        var newPage = PageFactory.Default(pathParts[i], parsedPage.Text, parsedPage.PhoneNumbers, parsedPage.Emails);
+                        var newPage = parsedPage != null
+                            ? PageFactory.Default(pathParts[i], parsedPage.Text, parsedPage.PhoneNumbers, parsedPage.Emails)
+                            : PageFactory.Empty(pathParts[i]);
                         currentPage.AddChildPage(newPage);
                     }
-                    else
-                    {
-                        currentPage.SetPayload(parsedPage.Text, parsedPage.Emails, parsedPage.PhoneNumbers);
-                    }
+                    else if(parsedPage != null) currentPage.SetPayload(parsedPage.Text, parsedPage.Emails, parsedPage.PhoneNumbers);
                 }
                 this.pagesCount++;
             }

@@ -7,9 +7,9 @@ namespace SitesGatherer.Sevices.HTMLParser.Models
         public List<string> Emails { get; }
         public List<string> PhoneNumbers { get; }
         public string Text { get; }
-        public Language Language { get; }
-
-        public ParsedPage(List<string> links, List<string> emails, List<string> phoneNumbers, string text, Language language)
+        public string Language { get; }
+        
+        public ParsedPage(List<string> links, List<string> emails, List<string> phoneNumbers, string text, string language)
         {
             this.Emails = emails;
             this.Language = language;

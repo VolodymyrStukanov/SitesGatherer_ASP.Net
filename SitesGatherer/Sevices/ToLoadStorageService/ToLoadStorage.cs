@@ -8,15 +8,14 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
     public class ToLoadStorage : IToLoadStorage
     {
         private readonly Lock lockObject = new();
-        
+
         private readonly List<ToLoad> toLoads = [];
+        private readonly List<string> ignoredDomain = [];
         private readonly Dictionary<int, HashSet<string>> hashLookup = [];
-        private readonly IParsedStorage parsedStorage;
-        private readonly ISkippedStorage skippedStorage;
-        public ToLoadStorage(IParsedStorage parsedStorage, ISkippedStorage skippedStorage)
+        private readonly ISitesStorage sitesStorage;
+        public ToLoadStorage(ISitesStorage sitesStorage)
         {
-            this.parsedStorage = parsedStorage;
-            this.skippedStorage = skippedStorage;
+            this.sitesStorage = sitesStorage;
         }
 
         public ToLoad? GetNext()
@@ -39,7 +38,7 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
                     if (set.Count == 0)
                         hashLookup.Remove(hash);
                 }
-                return next;                
+                return next;
             }
         }
 
@@ -51,7 +50,7 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
                 if (found == null)
                 {
                     toLoad = new ToLoad();
-                    return false;                    
+                    return false;
                 }
                 toLoad = found;
                 toLoads.Remove(toLoad);
@@ -116,6 +115,31 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
 
             lock (lockObject)
             {
+                var excludedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ".mp4", ".mp3", ".avi", ".mov", ".wmv", ".flv", ".webm", ".mkv", ".m4v",
+                    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg", ".webp", ".tiff", ".ico",
+                    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".rtf",
+                    ".zip", ".rar", ".7z", ".tar", ".gz", ".exe", ".msi", ".dmg", ".deb",
+                    ".css", ".js", ".xml", ".json", ".csv", ".rss", ".atom"
+                };
+                urls = urls.Where(x =>
+                {
+                    if (!Uri.TryCreate(x, UriKind.Absolute, out var uri))
+                        return false;
+
+                    // Check if the path has a file extension
+                    var extension = Path.GetExtension(uri.AbsolutePath.Split('?')[0].Split('#')[0]);
+
+                    // If there's no extension, assume it's an HTML page
+                    if (string.IsNullOrEmpty(extension))
+                        return true;
+
+                    // Check if the extension is in our excluded list
+                    return !excludedExtensions.Contains(extension);
+                }).ToList();
+
+
                 var newToLoad = urls.GetToLoads(parentDomain, parentshipDepth);
 
                 if (parentshipDepth == 0 && parentDomain != null)
@@ -128,8 +152,7 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
 
                 //filter out already processed links
                 newToLoad = newToLoad
-                .Where(x => !this.parsedStorage.Contains(x.Domain, x.PathParts)
-                    && !this.skippedStorage.Contains(x.Domain, x.PathParts));
+                .Where(x => !this.sitesStorage.Contains(x.Domain, x.PathParts));
 
                 //filter out already added
                 newToLoad = newToLoad
@@ -153,14 +176,20 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
                 return new ToLoadStorageDto
                 {
                     ToLoadDtos = this.toLoads.Select(x => x.ToDto()),
+                    IgnoredDomain = this.ignoredDomain
                 };
             }
         }
 
         public void Restore(ToLoadStorageDto data)
         {
-            foreach (var toLoad in data.ToLoadDtos) {
+            foreach (var toLoad in data.ToLoadDtos)
+            {
                 AddToLoads([toLoad.Link], toLoad.ParentDomain, toLoad.ParentshipDepth);
+            }
+            foreach (var ignored in data.IgnoredDomain)
+            {
+                AddIgnoredDomain(ignored);
             }
         }
 
@@ -173,6 +202,14 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
                     if (!total.Contains(next.Domain)) return [.. total, next.Domain];
                     return total;
                 });
+            }
+        }
+
+        public void AddIgnoredDomain(string domain)
+        {
+            lock (lockObject)
+            {
+                this.ignoredDomain.Add(domain);
             }
         }
     }

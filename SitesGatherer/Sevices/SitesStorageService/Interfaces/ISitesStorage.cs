@@ -8,7 +8,7 @@ namespace SitesGatherer.Sevices.SitesStorageService.Interfaces
 {
     public interface ISitesStorage : ISerializableData<SitesStorageDto>, IDeserializedStorage<IEnumerable<Site>>
     {
-        public void StorePage(ParsedPage parsedPage, ToLoad toLoad);
+        public void StorePage(ParsedPage? parsedPage, ToLoad toLoad);
 
         public bool LimitReached(string domain);
 
@@ -16,5 +16,6 @@ namespace SitesGatherer.Sevices.SitesStorageService.Interfaces
         public bool Contains(string domain, string[] pathParts);
         public void ResetIterator();
         public Page? GetNextPage();
+        public void RemoveSiteByDomain(string domain);
     }
 }

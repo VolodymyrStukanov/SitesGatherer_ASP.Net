@@ -13,5 +13,6 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
         public bool TryGetNextByDomain(out ToLoad toLoad, string domain);
         public int GetToLoadCount();
         public List<string> GetUniqueDomains();
+        public void AddIgnoredDomain(string domain);
     }
 }

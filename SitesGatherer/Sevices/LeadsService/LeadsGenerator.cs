@@ -7,11 +7,11 @@ namespace SitesGatherer.Sevices.LeadsService
 {
     public class LeadsGenerator : ILeadsGenerator
     {
-        private readonly IParsedStorage parsedStorage;
+        private readonly ISitesStorage sitesStorage;
         private readonly ISettingsService settings;
-        public LeadsGenerator(IParsedStorage parsedStorage, ISettingsService settings)
+        public LeadsGenerator(ISitesStorage sitesStorage, ISettingsService settings)
         {
-            this.parsedStorage = parsedStorage;
+            this.sitesStorage = sitesStorage;
             this.settings = settings;
         }
 
@@ -20,8 +20,8 @@ namespace SitesGatherer.Sevices.LeadsService
         {
             var result = new List<Lead>();
 
-            this.parsedStorage.ResetIterator();
-            Page? page = this.parsedStorage.GetNextPage();
+            this.sitesStorage.ResetIterator();
+            Page? page = this.sitesStorage.GetNextPage();
             while (page != null)
             {
                 if (page.CanBeLead(catalogContactsCountLimit, settings.ProhibitedUrls))
@@ -48,7 +48,7 @@ namespace SitesGatherer.Sevices.LeadsService
                         if (!added) result.Add(newLead);
                     }
                 }
-                page = this.parsedStorage.GetNextPage();
+                page = this.sitesStorage.GetNextPage();
             }
             return result;
         }

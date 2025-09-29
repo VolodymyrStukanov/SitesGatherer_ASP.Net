@@ -27,10 +27,10 @@ namespace SitesGatherer.Sevices.Serialization.Extensions
             return dto != null ? siteStorageFactory.FromDto(dto) : new SitesStorage();
         }
     
-        public static ToLoadStorage ToLoadStorageFromJson(this string json, IParsedStorage parsedStorage, ISkippedStorage skippedStorage)
+        public static ToLoadStorage ToLoadStorageFromJson(this string json, ISitesStorage sitesStorage)
         {
             var dto = SerializationService.Deserialize<ToLoadStorageDto>(json);
-            var storage = new ToLoadStorage(parsedStorage, skippedStorage);
+            var storage = new ToLoadStorage(sitesStorage);
             if (dto != null)
                 storage.Restore(dto);
             return storage;

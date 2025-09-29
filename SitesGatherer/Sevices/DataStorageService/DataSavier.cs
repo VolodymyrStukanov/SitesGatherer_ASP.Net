@@ -7,13 +7,11 @@ namespace SitesGatherer.Sevices.DataStorageService
 {
     public class DataSavier
     {
-        private readonly IParsedStorage parsedStorage;
-        private readonly ISkippedStorage skippedStorage;
+        private readonly ISitesStorage sitesStorage;
         private readonly IToLoadStorage toLoadStorage;
-        public DataSavier(IParsedStorage parsedStorage, ISkippedStorage skippedStorage, IToLoadStorage toLoadStorage)
+        public DataSavier(ISitesStorage sitesStorage, IToLoadStorage toLoadStorage)
         {
-            this.parsedStorage = parsedStorage;
-            this.skippedStorage = skippedStorage;
+            this.sitesStorage = sitesStorage;
             this.toLoadStorage = toLoadStorage;
         }
 
@@ -22,16 +20,14 @@ namespace SitesGatherer.Sevices.DataStorageService
 
             //зберігання інформації про те що вже обробили
             Directory.CreateDirectory(Locations.ProcessedPath);
-            File.WriteAllText($@"{Locations.ProcessedPath}\{Locations.ProcessedFile}", this.parsedStorage.ToJson());
-            Directory.CreateDirectory(Locations.SkippedPath);
-            File.WriteAllText($@"{Locations.SkippedPath}\{Locations.SkippedFile}", this.skippedStorage.ToJson());
+            File.WriteAllText($@"{Locations.ProcessedPath}\{Locations.ProcessedFile}", this.sitesStorage.ToJson());
             Directory.CreateDirectory(Locations.ToLoadStroragePath);
             File.WriteAllText($@"{Locations.ToLoadStroragePath}\{Locations.ToLoadFile}", this.toLoadStorage.ToJson());
 
             //зберігання контенту сайтів
             var contentPath = $@"{Locations.ProcessedPath}\content";
             Directory.CreateDirectory(contentPath);
-            var sites = this.parsedStorage.GetSitesData();
+            var sites = this.sitesStorage.GetSitesData();
 
             foreach (var site in sites)
             {

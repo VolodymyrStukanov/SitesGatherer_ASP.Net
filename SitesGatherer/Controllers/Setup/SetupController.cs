@@ -4,6 +4,7 @@ using SitesGatherer.Sevices.LeadsService;
 using SitesGatherer.Sevices.PagesHandler;
 using SitesGatherer.Sevices.Settings;
 using SitesGatherer.Sevices.DataStorageService;
+using SitesGatherer.Sevices.PagesHandler.models;
 
 namespace SitesGatherer.Controllers.Setup
 {
@@ -44,7 +45,7 @@ namespace SitesGatherer.Controllers.Setup
         {
             Task.Run(() =>
             {
-                pagesHandler.Start(RunnigMode.MultyThread);
+                pagesHandler.Start(RunningMode.MultyThread);
             });
 
             return Ok("Request received.");

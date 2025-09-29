@@ -3,6 +3,7 @@ using SitesGatherer.Sevices.DataStorageService;
 using SitesGatherer.Sevices.LeadsService;
 using SitesGatherer.Sevices.LoadService;
 using SitesGatherer.Sevices.PagesHandler;
+using SitesGatherer.Sevices.PagesHandler.models;
 using SitesGatherer.Sevices.Serialization.Extensions;
 using SitesGatherer.Sevices.Settings;
 using SitesGatherer.Sevices.SitesStorageService;
@@ -48,17 +49,11 @@ builder.Services.AddHttpClient("LoaderClient", (serviseProvider, httpClient) =>
 
 #region services
 builder.Services.Configure<WorkerSettings>(builder.Configuration.GetSection("WorkerSettings"));
+builder.Services.Configure<LanguagesSettings>(builder.Configuration.GetSection("LanguagesSettings"));
 
 builder.Services.AddSingleton<DataSavier>();
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
-builder.Services.AddSingleton<ISkippedStorage, SitesStorage>(options =>
-{
-    var settingsService = options.GetService<ISettingsService>()!;
-
-    var json = settingsService.GetSkippedStorageJSON();
-    return json == null ? new SitesStorage() : json.DataStorageFromJson();
-});
-builder.Services.AddSingleton<IParsedStorage, SitesStorage>(options =>
+builder.Services.AddSingleton<ISitesStorage, SitesStorage>(options =>
 {
     var settingsService = options.GetService<ISettingsService>()!;
 
@@ -67,12 +62,11 @@ builder.Services.AddSingleton<IParsedStorage, SitesStorage>(options =>
 });
 builder.Services.AddSingleton<IToLoadStorage, ToLoadStorage>(options =>
 {
-    var skippedStorage = options.GetService<ISkippedStorage>()!;
-    var parsedStorage = options.GetService<IParsedStorage>()!;
+    var sitesStorage = options.GetService<ISitesStorage>()!;
     var settingsService = options.GetService<ISettingsService>()!;
 
     var json = settingsService.GetToLoadStorageJSON();
-    return json == null ? new ToLoadStorage(parsedStorage, skippedStorage) : json.ToLoadStorageFromJson(parsedStorage, skippedStorage);
+    return json == null ? new ToLoadStorage(sitesStorage) : json.ToLoadStorageFromJson(sitesStorage);
 });
 builder.Services.AddSingleton<IPagesHandler, PagesHandler>();
 

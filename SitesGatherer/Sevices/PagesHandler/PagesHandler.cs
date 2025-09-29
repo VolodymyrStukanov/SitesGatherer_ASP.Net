@@ -9,6 +9,7 @@ using SitesGatherer.Sevices.SitesStorageService.Interfaces;
 using SitesGatherer.Sevices.DataStorageService;
 using SitesGatherer.Sevices.WorkerService;
 using SitesGatherer.Sevices.WorkerService.Models;
+using SitesGatherer.Sevices.PagesHandler.models;
 
 namespace SitesGatherer.Sevices.PagesHandler
 {
@@ -19,37 +20,39 @@ namespace SitesGatherer.Sevices.PagesHandler
         private readonly WorkersManager workersManager;
         
         private readonly ILoader loader;
-        private readonly IParsedStorage parsedStorage;
-        private readonly ISkippedStorage skippedStorage;
+        private readonly ISitesStorage sitesStorage;
+        private readonly List<string> allowedLanguages;
         private readonly IToLoadStorage toLoadStorage;
         private readonly IHtmlParser parser;
         private readonly ISettingsService settings;
         private readonly DataSavier dataSavier;
         private int pageCounter = 0;
 
+        private readonly int delay = 5000;
+
         public PagesHandler(
             ILoader loader,
-            IParsedStorage parsedStorage,
-            ISkippedStorage skippedStorage,
+            ISitesStorage sitesStorage,
             IOptions<WorkerSettings> workerSettings,
+            IOptions<LanguagesSettings> languagesSettings,
             ISettingsService settings,
             IToLoadStorage toLoadStorage,
             DataSavier dataSavier)
         {
             this.loader = loader;
-            this.parsedStorage = parsedStorage;
-            this.skippedStorage = skippedStorage;
+            this.sitesStorage = sitesStorage;
             this.parser = new HtmlParser();
             this.toLoadStorage = toLoadStorage;
             this.settings = settings;
             this.dataSavier = dataSavier;
             this.workersManager = new WorkersManager(workerSettings.Value);
+            this.allowedLanguages = languagesSettings.Value.AllowedLanguages;
         }
 
-        public async Task Start(RunnigMode mode = RunnigMode.SingleThread)
+        public async Task Start(RunningMode mode = RunningMode.SingleThread)
         {
             this.toLoadStorage.AddToLoads(settings.StartUrls);
-            if (mode == RunnigMode.SingleThread)
+            if (mode == RunningMode.SingleThread)
                 await this.StartProcessing();
             else
                 StartMultitaskingProcessing();
@@ -70,7 +73,7 @@ namespace SitesGatherer.Sevices.PagesHandler
                         {
                             this.dataSavier.Save();
                         }
-                        Thread.Sleep(200);
+                        Thread.Sleep(delay);
                     }
                 }
             }
@@ -110,7 +113,7 @@ namespace SitesGatherer.Sevices.PagesHandler
                     if (!this.workersManager.TryRunNewWroker(async () => await ProcessDomain(domain), RunNewWorkers))
                         break;
                     domainsTakenByWorkers.Add(domain);
-                    Console.WriteLine($"taken domains count ---- {this.domainsTakenByWorkers.Count}");                    
+                    Console.WriteLine($"taken domains count ---- {this.domainsTakenByWorkers.Count}");
                 }
             }
         }
@@ -121,8 +124,11 @@ namespace SitesGatherer.Sevices.PagesHandler
             {
                 await ProcessPage(toLoad);
                 RunNewWorkers();
+                Thread.Sleep(delay);
             }
             this.dataSavier.Save();
+            this.toLoadStorage.AddIgnoredDomain(domain);
+            this.sitesStorage.RemoveSiteByDomain(domain);
         }
 
         private async Task ProcessPage(ToLoad toLoad)
@@ -130,17 +136,13 @@ namespace SitesGatherer.Sevices.PagesHandler
             var page = await this.loader.LoadPage(toLoad.Link);
             if (page.Length == 0) return;
             ParsedPage parsedPage = await this.parser.Parse(page, toLoad.BaseUrl);
-            if (parsedPage.Language == Languages.UA)
+            if (this.allowedLanguages.Contains(parsedPage.Language))
             {
-                this.parsedStorage.StorePage(parsedPage, toLoad);
+                this.sitesStorage.StorePage(parsedPage, toLoad);
                 this.toLoadStorage.AddToLoads(parsedPage.Links, toLoad.Domain, toLoad.ParentshipDepth ?? settings.ParentshipDepth);
-                Console.WriteLine($"Parsed ---- {toLoad.Link}");
             }
-            else
-            {
-                this.skippedStorage.StorePage(parsedPage, toLoad);
-                Console.WriteLine($"Skipped ---- {toLoad.Link}");
-            }
+            else this.sitesStorage.StorePage(null, toLoad);
+            Console.WriteLine($"Parsed ---- {toLoad.Link} ---- {DateTime.Now.ToString("ss:mm:hh")}");
         }
 
     }
