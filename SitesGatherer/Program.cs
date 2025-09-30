@@ -18,6 +18,8 @@ builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient("LoaderClient", (serviseProvider, httpClient) =>
 {
+    httpClient.Timeout = TimeSpan.FromSeconds(30);
+
     // Simulate a modern Chrome browser on Windows
     httpClient.DefaultRequestHeaders.Add("User-Agent",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
@@ -57,7 +59,8 @@ builder.Services.AddSingleton<ISitesStorage, SitesStorage>(options =>
 {
     var settingsService = options.GetService<ISettingsService>()!;
 
-    var json = settingsService.GetParsedStorageJSON();
+    // string? json = null;
+    string? json = settingsService.GetParsedStorageJSON();
     return json == null ? new SitesStorage() : json.DataStorageFromJson();
 });
 builder.Services.AddSingleton<IToLoadStorage, ToLoadStorage>(options =>
@@ -65,7 +68,8 @@ builder.Services.AddSingleton<IToLoadStorage, ToLoadStorage>(options =>
     var sitesStorage = options.GetService<ISitesStorage>()!;
     var settingsService = options.GetService<ISettingsService>()!;
 
-    var json = settingsService.GetToLoadStorageJSON();
+    // string? json = null;
+    string? json = settingsService.GetToLoadStorageJSON();
     return json == null ? new ToLoadStorage(sitesStorage) : json.ToLoadStorageFromJson(sitesStorage);
 });
 builder.Services.AddSingleton<IPagesHandler, PagesHandler>();

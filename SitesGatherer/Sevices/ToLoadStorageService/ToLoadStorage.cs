@@ -175,8 +175,8 @@ namespace SitesGatherer.Sevices.ToLoadStorageService
             {
                 return new ToLoadStorageDto
                 {
-                    ToLoadDtos = this.toLoads.Select(x => x.ToDto()),
-                    IgnoredDomain = this.ignoredDomain
+                    ToLoadDtos = [.. this.toLoads.Select(x => x.ToDto())],
+                    IgnoredDomain = [.. this.ignoredDomain]
                 };
             }
         }

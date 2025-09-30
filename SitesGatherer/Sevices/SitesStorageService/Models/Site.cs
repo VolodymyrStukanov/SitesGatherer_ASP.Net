@@ -95,15 +95,18 @@ namespace SitesGatherer.Sevices.SitesStorageService.Models
         }
 
         public SiteDto ToDto()
-        {           
-            return new SiteDto
+        {
+            lock (lockObject)
             {
-                Domain = Domain,
-                HomePage = homePage.ToDto(),
-                PagesCount = pagesCount,
-                ParentDomains = parentDomains.ToList(),
-                AllPagesIterated = allPagesIterated
-            };
+                return new SiteDto
+                {
+                    Domain = Domain,
+                    HomePage = homePage.ToDto(),
+                    PagesCount = pagesCount,
+                    ParentDomains = [.. parentDomains],
+                    AllPagesIterated = allPagesIterated
+                };
+            }
         }
     }
 }

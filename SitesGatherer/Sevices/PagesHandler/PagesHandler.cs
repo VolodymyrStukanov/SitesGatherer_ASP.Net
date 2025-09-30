@@ -133,16 +133,24 @@ namespace SitesGatherer.Sevices.PagesHandler
 
         private async Task ProcessPage(ToLoad toLoad)
         {
-            var page = await this.loader.LoadPage(toLoad.Link);
-            if (page.Length == 0) return;
-            ParsedPage parsedPage = await this.parser.Parse(page, toLoad.BaseUrl);
-            if (this.allowedLanguages.Contains(parsedPage.Language))
+            try
             {
-                this.sitesStorage.StorePage(parsedPage, toLoad);
-                this.toLoadStorage.AddToLoads(parsedPage.Links, toLoad.Domain, toLoad.ParentshipDepth ?? settings.ParentshipDepth);
+                Console.WriteLine($"Started ---- {toLoad.Link} ---- {DateTime.Now.ToString("HH:mm:ss")}");
+                var page = await this.loader.LoadPage(toLoad.Link);
+                if (page.Length == 0) return;
+                ParsedPage parsedPage = await this.parser.Parse(page, toLoad.BaseUrl);
+                if (this.allowedLanguages.Contains(parsedPage.Language))
+                {
+                    this.sitesStorage.StorePage(parsedPage, toLoad);
+                    this.toLoadStorage.AddToLoads(parsedPage.Links, toLoad.Domain, toLoad.ParentshipDepth ?? settings.ParentshipDepth);
+                }
+                else this.sitesStorage.StorePage(null, toLoad);
+                Console.WriteLine($"Parsed ---- {toLoad.Link} ---- {DateTime.Now.ToString("HH:mm:ss")}");
             }
-            else this.sitesStorage.StorePage(null, toLoad);
-            Console.WriteLine($"Parsed ---- {toLoad.Link} ---- {DateTime.Now.ToString("ss:mm:hh")}");
+            catch (Exception ex)
+            {         
+                Console.WriteLine($"Excetion while processing a page. \nMessage: {ex.Message}\nUrl: {toLoad.BaseUrl}");
+            }
         }
 
     }

@@ -140,7 +140,7 @@ namespace SitesGatherer.Sevices.HTMLParser
             doc.LoadHtml(html);
             
             //removing all scripts and styles
-            var garbage = doc.DocumentNode.SelectNodes("//script|//style");
+            var garbage = doc.DocumentNode.SelectNodes("//script|//style|//video|//audio|//iframe|//embed|//object|//canvas|//svg");
             if (garbage != null)
             {
                 foreach (var node in garbage)
@@ -155,7 +155,7 @@ namespace SitesGatherer.Sevices.HTMLParser
                 for (int i = allElements.Count - 1; i >= 0; i--)
                 {
                     var element = allElements[i];
-                    
+
                     if (element.Name == "br")
                     {
                         // Replace <br> with space
